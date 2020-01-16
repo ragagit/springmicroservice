@@ -1,0 +1,488 @@
+
+=== Monolithic Application
+
+Database
+Client
+Server
+
+- Why not Monolithic?
+All in one single unit
+Many developers commit to one single project that grows day by day.
+Error effect. If there is a problem the whole system might not work.
+Technology Dependency. If you need to upgrade technology the whole system needs to be upgraded.
+CI/CD. If you work with CI/CD process the whole system needs to build.
+Big Databases. Only one schema.
+
+- Microservices
+Slice a big project into small projects.
+
+- Why Microservices?
+Not for small projects. For small projects you would introduce too much complexity.
+Technology independent, you can introduce new technology and have separate schemas.
+CI/CD process. They can be handled for efficiently.
+Error Handle. If there is an error the whole system will not be affected.
+Scalability. Process can grow easily, handling the load balancing.
+
+Course Enrolment Application
+
+Microservice User						Microservice course
+				
+
+				Cloud Communication
+				   Eureka Server
+
+
+				     Gateway
+				   Spring Zuul
+
+
+				   Client React
+
+
+=== Install MySQL
+docker pull mysql
+docker run --name springmysql -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=springmicro mysql
+docker ps
+docker exec -it springmysql mysql -uroot -p  //this is to open a shell
+
+Make sure you have Java JRE and JSDK
+You can use https://start.spring.io to create a project. This will create structure including application.properties file and db.changelog directory
+You can install Lombok as plug in IntelliJ and enable extension in Settings->Build,Execution, Deployment->Compiler->Annotation Processors
+
+=== Lombok is used for setters and getters
+Add Lombok plugin in IntelliJ. You need to enable in Preferences -> Build,Execution,Deploymen->Annotationin Processors->Enable annotation processing
+Field level
+public class Demo{
+	@Getter
+	@Setter
+	private String name;
+}
+Class level
+@Getter
+@Setter
+public class Demo{
+	private String name;
+}
+
+With @Data we can handle setters, getters, equals, hasCode, toString, etc
+@Data
+public class Demo {
+
+}
+
+With @Value we can create final and immutable classes, plus @Data properties.
+@Value
+public class Demo{
+
+}
+
+It creates @AllArgsConstructor for constructors with all arguments and 
+@NoArgsConstructors for constructors with no arguments.
+
+=== Spring Core is a framework for dependency injection.
+Dependency injection it is a pattern that removes dependency from our code so it can be easily managed and tested. It makes our system loosely coupled.
+It is a SOLID principle High Level modules shouldn't depend on Low level modules, there should be an abstraction between them. 
+Dependency injection can be done by constructor or by setter
+Spring handles dependency injection by
+Constructors
+Setters
+Fields
+
+@Beans are object or instances
+@Configuration indicates that class is source of beans definitions
+@Autowired for field base dependency injection
+These methods can be used only in one Spring component
+
+@Spring Component
+public class UserService{
+
+	@Autowired
+	UserRepository userRepository;
+}
+
+=== Spring Components
+@Component General purpose annotation indicating that this is a Spring Component
+@Repository indicates that the class defines a data repository
+@Service indicates that the class holds business logic and calls repository methods
+@Controller that particular class serves the role of controller. Methods can be called to server view layer.
+@SpringBootApplication indicates the main class
+@Transactional it provides transactional methods, if there are errors in the db all changes will be rolled back.
+Hibernate objects to tables mapping.
+
+=== Installation
+You can use https://start.spring.io to create a gradel project and add the following dependencies
+Web
+Security
+Jpa
+Rest repository
+Liquibase Migration
+MySql driver
+Eureka
+Lombok
+
+- Update application.properties customize ports
+
+=== Hibernate and Basic Annotations
+Object Relational Mapping
+The relation from table to a class. To create this relation we have the following annotations:
+
+@Entity With this annotation we can declare that a class is a hibernate object or entity. 
+@Table This entity will be presented in Database with this name.
+
+@Entity
+@Table(name="user")
+@Column(name="name") We can specify column name with this annotation
+@Id This field will be primary id.
+@GeneratedValue some db have sequence or auto generated values.
+@OneToOne for relations
+@ManyToOne 
+To keep user course relation we can use a list or a we can show them in another table.
+
+@ManyToOne(fetch=FetchType.EAGER)
+@JoinColumn(name="user_id", referencedColumnName="id")
+We can optimize relations with Fetch Types strategics.
+For instance we want country every time we call a user in this case we use
+@OneToOne(fetch=FetchType.EAGER)
+The other case is when we can to call Country only when it is needed, then we use:
+@OneToOne(fetch=FetchType.LAZY)
+
+=== SQL
+CREATE DATABASE IF NOT EXISTS dbname
+CREATE TABLE tablename, CONSTRAINT pk
+DROP TABLE TableName
+INSERT INTO VALUES
+DELETE FROM  WHERE
+TRUNCATE TABLE table name //this is to delete all rows of a table
+SELECT FROM WHERE
+
+=== Liquibase
+Add in src/main/resources/db.changelog/
+db.changelog-1.0.xml
+db.changelog-master.xml
+
+
+=== JPA Java Persistance API Repository
+One of the main advantage of SpringBoot is auto configuration. One of them is JPA for CRUD operations
+To use it we only need to extend JpaRepository
+
+public interface UserRepository extends JpaRepository<User, long>. With entity model and id field entity class.
+
+findById
+existsById
+findByName
+deleteById
+
+In JPA we can also describe neat queries or neat methods. If we have a user entity we can use
+findBy plus field name method.
+
+We can also use @Query annotation, for example find max id in user table.
+@Query("select mx(id) from user")
+Long findMaxId();
+
+@Query("select u.name from User u where u.id in (:pIdList)")
+List<String> findByIdList(@Param("pIdList") List<Long> idList);
+
+We can delete or update operations with queries.
+
+public interface UserRepository extends JpaRepository<User, Long>{
+void deleteByName(String name);
+void deleteByPassword(String password);
+void deleteByUsername(String username);
+
+But with queries with need the @Modify annotation because these operations will need commit after execution
+
+public interface UserRepository extends JpARepository<User, Long>{
+@Modifying
+@Query("delete from User u where u.name = :name"
+void deleteCustomName(@Param("name") String name);
+
+
+=== MVC
+Models are called from Services and Services from Controllers and controllers returning model classes.
+Implement service
+
+===  Rest Controller Overview
+They work with Http servlets
+
+Request 
+GET //@GetMapping
+POST //@PostMapping
+DELETE, //@DeleteMapping
+PUT //@PutMapping
+PATCH //@PatchMapping
+
+
+
+API Endpoints
+//http://localhost:port/service/login
+@GetMapping("/service/login")
+Public ResponseEntity<?> getUser(Principal principal){
+}
+
+We can send parameters with @RequestBody
+
+Public ResponseEntity<?> saveUser(@RequestBody User user){
+}
+
+We can also send parameters with @PathVariable
+
+@DeteMapping("/service/user/partial/{id}")
+Public ResponseEntity<?> partialUpdate(@PathVariable Long id){
+	
+}
+
+We can also use @RequestParam
+@DeleteMapping("/service/user/delete")
+public ResponseEntity<?>deleteUser(@RequestParam("id") Long id){
+ //localhost:port/service/user/delete?id=1234
+}
+
+Response
+
+We can define every method with ResponseEntity. It encapsulates headers, body and status 
+@PostMapping("/service/registration")
+public ResponseEnity<?> saveUser(@RequestBody User user){
+
+	return new ResponseEntity<>(userService.save(user), HttpStatus.CREATED);
+}
+
+
+- Spring Security
+Password needs to be encrypted Spring security provides an algorithm that changes over time.
+We can define authorized and not authorized pages.
+For instance /login, /register can be unauthorized
+/home needs to be authorized
+
+Wed can also specify Login Path /custom/login and Logout Path /custom/logout
+
+Start point of Spring Security is HTTP FILTERS
+They catch the HTTP request and filter it. When the client sends a request Spring Security catches
+and use basic authentication filters
+The request should be sent with basic Authorization token in the header. Credentials should be sent
+Base64 encoded formed with user and password. Later token will be provided.
+Authentication will be implemented with Provider Manager. This will iterate through all configured Authentication
+Providers and delegates the Authentication process. There are many implementation one is DAO.
+Authentication Object is a principal object. It contains credentials, authorities and principal
+
+Spring Security Layer there are default configurations:
+User class
+User Service
+Login Path and
+Default User Security is User Detail Service. In implements UserDetails and grant authorities.
+
+public class UserDetailServiceImpl implements UserDetailsService {
+
+=== Spring Security Configuration 
+For login we can send credentials:
+Through URL api/login?username=abc&password=abc
+Http Header
+New HttpHeaders({ authorization: "Basic" + btoa(user.username + ':' + user.password)
+btoa: Basic64
+ These will be sent to Spring Security and the first thing is what is the default path for login security
+
+formLogin(): FormLoginConfigurer
+Default
+Login GET - login form
+Login POST - process credentials and if valid authenticate the user
+Login?error GET - redirect here for fails auth attempts
+Login?logout GET - redirect here after successfully login out.
+
+Code
+http.
+formLogin()
+.loginPath('/login')
+.loginProcessingUrl('login')
+.successForwardUrl('/login?success')
+.failureForwardUrl('/login?error)
+
+
+The other configuration is 
+httpBasic(): HttpBasicConfigurer
+SS will check if the request headers contains Authorization: header or not and starts with basic.
+
+The other configuration is Http Session  if requires, cookies. It will creates when it needs so.
+
+The other configuration is Cross Site Request Forgery. It forces and end user to execute unwanted action in
+the web application. To avoid it SS uses cookies and http flex
+
+Last configuration is logout(): LogoutConfigurer
+
+We can add Cross-Origin Resource Sharing means outside the origin and can be specified in the request headers
+
+Public URLS, we can specify URLs base on user roles.
+
+Logout path the default is logout
+
+Login
+
+Session
+
+CSRF if you want to use different ports you can't use CSRF directly.
+
+Process
+ Login
+ Spring Security Http Filters. This can be Basic Authentication filter.
+ There can be a session
+ SS will pass authorization headers as well as role information
+ SS will create Authentication object in a security context.
+
+
+=== To create a second instance go to
+Run -> Edit Configuration -> click on + Add a name and copy Main class and module from first instance
+Also in VM options add -Dserver.port=2222
+
+=== Course Microservice ===
+Use https://start.spring.io tp create the project
+Web
+Jpa
+Rest repository
+Liquibase Migration
+MySql driver
+Eureka client
+Lombok
+openfeign. //To connect to other services
+
+- Update application.properties with port, db driver, etc.
+- set up liquibase
+- create the model using Hibernate annotations @Entity, @Table, etc.
+- create repository extending JpaRepository
+- create service interface and service implementation using repositories
+- enable feignclient
+- create the controller
+- enable eureka service client on application.properties and @EnableDiscoveryClient in main class
+- enable ribbon as a load balancer in eureka
+- use DIscoveryClient object to list number of instances, service names and port to eureka server
+- Allow Cross Origin Resource in main class
+
+=== Zuul Microservice
+- Use https://start.spring.io tp create the project
+- Zuul
+- Eureka Client
+- application.properties
+- timeouts configurations
+- configure Cross-origin-resource-sharing in main
+- Add @EnableZuulProxy, @EnableDiscoveryClient
+- You can reach the service through gateway /api/user/service/port to get the port.
+
+=== Client side react 
+www.react.js.org
+- npm install -g crest-react-app
+- npm create-react-app newApplicationName
+- we use npm in similar way we use maven to pull packages
+pom.xml - build.gradle - package.json
+- No model view controller
+- we can add libraries with 
+  npm install component name --save . The save adds dependency to package.json file.
+- In react there is no html page everything is in javascript files. Everything does with DOM.
+- Main javascript file is "index.js"
+- To call other components the component name is used as tag.
+- Each component should implement component.
+	class LoginPage extends React.Component {
+- In React there are two main configuration files
+	app.js we can describe components and routes here
+	index.js we can describe external Jas and css bootstrap jquery.
+- Lifecycle of components with three main methods
+	componentWillMount(). //called before render function
+	componentDidMount()	//called after render function
+	componentWillUnmount()	
+- There are two extensions in React 
+	jsx //usually is used for rendering html page.
+	js
+
+- There are two main components configurations:
+	props	//Used for communication child parent child, immutable
+	states 	//Mutable, Local Variable, Current Page Variable
+- Export and Import
+
+	Export //two types Default
+	export default MyClass; // we don't need braces
+	export class MyClass1 extends Components{
+	}
+- Syntaxes
+	We can display html with "render" function.
+	We can display component value in html like with single brace {errorMessage}
+	we can use if expressions with js syntax in html
+	we can use for loops with "map" 
+- Check that you have node up-to-date
+	brew upgrade node
+- create the project 
+	create-react-app clientside
+
+	yarn start
+	yarn build
+	yarn test
+	yarn eject
+	
+- Go to the new directory and get dependencies
+	npm install --save axios
+	npm install --save react-router-dom
+	npm install bootstrap jquery popper.js --save
+	npm install @fortawesome/fontawesome-svg-core @fortawesome/free-solid-svg-icons @fortawesome/react-fontawesome --save
+- Add imports to index.js
+
+	import 'bootstrap/dist/css/bootstrap.min.css';
+	import $ from 'jquery';
+	import Popper from 'popper.js';
+	import 'bootstrap/dist/js/bootstrap.bundle.min';
+
+- Java Script
+	var	//global also inside and can be overriden
+	let	//block scope, nor redeclared
+	const	//maintains declaration
+
+- constructor
+	export class User{
+	constructor(username, password, name){
+	 this.username = username;
+	 this.password = password;
+	 this.name = name;
+	}
+	var user = new User();
+	if the constructor doesn't assign all the variable they will be set to null
+- destructing
+	const countries = [ 'UK', 'TR', 'USA', 'IN', 'FR'];
+	const[first] = countries;
+	const[first,,third, ...rest] = countries;
+
+- Equality
+	true == 1; //true
+	"2" == 2; //true "2" is converted to 2. This is type coercion
+	true === 1 //false
+	"2" === 2  //false
+- Login page
+	In react you can use if or { condition &&
+	In react we can handle events with arrow functions onChange={ (e) => this.handleChange(e)} 
+	We can handle element styles with className 
+	In react in html we can show component values with { }
+- Register implementation
+- Course service implementation
+- Profile page implementation.
+- Home page
+- Course details
+- Routers
+- Navigation bar
+
+=== To use bootstrap from scratch in react
+You need:
+- create-react-app appname
+-  npm install --save react-router-dom
+   npm install bootstrap jquery popper.js --save
+- include it in index.js or App.js
+import 'bootstrap/dist/js/bootstrap.bundle.min';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+
+=== To use react-bootstrap
+- create-reactapp appname
+- npm install react-bootstrap bootstrap --save
+
+
+
+
+
+
+
+
+
+
+ 
